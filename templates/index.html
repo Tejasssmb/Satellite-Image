@@ -1,0 +1,700 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Satellite Change Detection</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            padding: 20px;
+        }
+        
+        .navbar {
+            background: white;
+            padding: 15px 30px;
+            border-radius: 10px;
+            margin-bottom: 30px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            max-width: 1200px;
+            align-self: center;
+            width: 100%;
+        }
+        
+        .navbar h2 {
+            color: #333;
+            font-size: 24px;
+            margin: 0;
+        }
+        
+        .nav-links {
+            display: flex;
+            gap: 20px;
+        }
+        
+        .nav-links a {
+            text-decoration: none;
+            color: #667eea;
+            font-weight: 600;
+            padding: 8px 16px;
+            border-radius: 6px;
+            transition: all 0.3s ease;
+        }
+        
+        .nav-links a:hover {
+            background: #f0f0f0;
+            color: #764ba2;
+        }
+        
+        .nav-links a.active {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+        
+        .container {
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            padding: 40px;
+            max-width: 500px;
+            width: 100%;
+            margin: 0 auto;
+        }
+        
+        h1 {
+            color: #333;
+            margin-bottom: 10px;
+            font-size: 28px;
+        }
+        
+        .subtitle {
+            color: #666;
+            margin-bottom: 30px;
+            font-size: 14px;
+        }
+        
+        .form-group {
+            margin-bottom: 25px;
+        }
+        
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            color: #333;
+            font-weight: 500;
+            font-size: 14px;
+        }
+        
+        .file-input-wrapper {
+            position: relative;
+            overflow: hidden;
+            display: inline-block;
+            width: 100%;
+        }
+        
+        .file-input-wrapper input[type="file"] {
+            position: absolute;
+            left: -9999px;
+        }
+        
+        .file-input-label {
+            display: block;
+            padding: 15px;
+            background: #f5f7fa;
+            border: 2px dashed #667eea;
+            border-radius: 6px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            color: #667eea;
+            font-weight: 500;
+        }
+        
+        .file-input-wrapper:hover .file-input-label {
+            background: #eef2ff;
+            border-color: #764ba2;
+        }
+        
+        .file-input-wrapper input[type="file"]:focus + .file-input-label {
+            outline: 2px solid #667eea;
+            outline-offset: 2px;
+        }
+        
+        .file-name {
+            display: block;
+            margin-top: 8px;
+            font-size: 12px;
+            color: #666;
+            word-break: break-all;
+        }
+        
+        button[type="submit"] {
+            width: 100%;
+            padding: 12px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 6px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin-top: 20px;
+        }
+        
+        button[type="submit"]:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(102, 126, 234, 0.4);
+        }
+        
+        button[type="submit"]:active {
+            transform: translateY(0);
+        }
+        
+        .result {
+            margin-top: 30px;
+            padding: 20px;
+            border-radius: 6px;
+            display: none;
+        }
+        
+        .result.success {
+            background: #f0fdf4;
+            border: 1px solid #86efac;
+            color: #166534;
+        }
+        
+        .result.error {
+            background: #fef2f2;
+            border: 1px solid #fca5a5;
+            color: #991b1b;
+        }
+        
+        .result-content {
+            margin-top: 10px;
+        }
+        
+        .result-label {
+            font-weight: 600;
+            display: block;
+            margin-bottom: 5px;
+        }
+        
+        .result.danger {
+            background: linear-gradient(135deg, #fef2f2 0%, #fee2e2 100%);
+            border: 2px solid #dc2626;
+            color: #991b1b;
+            animation: pulse 2s infinite;
+        }
+        
+        @keyframes pulse {
+            0% { box-shadow: 0 0 0 0 rgba(220, 38, 38, 0.4); }
+            70% { box-shadow: 0 0 0 10px rgba(220, 38, 38, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(220, 38, 38, 0); }
+        }
+        
+        .land-usage-status {
+            padding: 15px;
+            border-radius: 8px;
+            font-size: 18px;
+            font-weight: bold;
+            text-align: center;
+            margin: 10px 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+        }
+        
+        .land-usage-status.illegal {
+            background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%);
+            color: white;
+            border: 2px solid #991b1b;
+            animation: alert-pulse 1.5s infinite;
+        }
+        
+        .land-usage-status.legal {
+            background: linear-gradient(135deg, #16a34a 0%, #15803d 100%);
+            color: white;
+            border: 2px solid #166534;
+        }
+        
+        @keyframes alert-pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.02); }
+        }
+        
+        .status-icon {
+            font-size: 24px;
+        }
+        
+        .status-text {
+            font-size: 20px;
+            letter-spacing: 1px;
+        }
+        
+        .alert-type {
+            font-size: 16px !important;
+            font-weight: 600 !important;
+        }
+        
+        /* Modal Styles */
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.8);
+            animation: modal-fade-in 0.3s ease-out;
+        }
+        
+        @keyframes modal-fade-in {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+        
+        .modal-content {
+            background: white;
+            margin: 5% auto;
+            padding: 0;
+            border-radius: 12px;
+            width: 90%;
+            max-width: 500px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+            animation: modal-slide-in 0.3s ease-out;
+        }
+        
+        @keyframes modal-slide-in {
+            from { transform: translateY(-50px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+        
+        .modal-header {
+            background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%);
+            color: white;
+            padding: 20px;
+            border-radius: 12px 12px 0 0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .modal-header h2 {
+            margin: 0;
+            font-size: 20px;
+            font-weight: 700;
+        }
+        
+        .modal-close {
+            font-size: 28px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+        
+        .modal-close:hover {
+            transform: scale(1.2);
+        }
+        
+        .modal-body {
+            padding: 25px;
+        }
+        
+        .alert-details {
+            text-align: center;
+        }
+        
+        .alert-type-display {
+            font-size: 24px;
+            font-weight: bold;
+            color: #dc2626;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+        }
+        
+        .alert-icon {
+            font-size: 32px;
+        }
+        
+        .alert-info {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            text-align: left;
+        }
+        
+        .alert-info p {
+            margin: 8px 0;
+            font-size: 16px;
+        }
+        
+        .alert-actions {
+            margin-top: 20px;
+        }
+        
+        .alert-message {
+            color: #dc2626;
+            font-weight: 600;
+            margin-bottom: 20px;
+            font-size: 16px;
+        }
+        
+        .action-buttons {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+        }
+        
+        .action-btn {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 6px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        .action-btn.primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+        
+        .action-btn.primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+        
+        .action-btn.secondary {
+            background: #6b7280;
+            color: white;
+        }
+        
+        .action-btn.secondary:hover {
+            background: #4b5563;
+        }
+        
+        .loading {
+            display: none;
+            text-align: center;
+            margin-top: 20px;
+        }
+        
+        .spinner {
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #667eea;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        .loading-text {
+            color: #666;
+            margin-top: 10px;
+            font-size: 14px;
+        }
+    </style>
+</head>
+<body>
+    <div class="navbar">
+        <h2>🛰️ Satellite Change Detection</h2>
+        <div class="nav-links">
+            <a href="/" class="active">📤 Upload</a>
+            <a href="/dashboard">📊 Dashboard</a>
+            <a href="/login">🔐 Login</a>
+        </div>
+    </div>
+
+    <!-- Illegal Activity Modal -->
+    <div id="illegalActivityModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>🚨 CRITICAL ALERT: Illegal Activity Detected</h2>
+                <span class="modal-close">&times;</span>
+            </div>
+            <div class="modal-body">
+                <div class="alert-details">
+                    <div class="alert-type-display">
+                        <span class="alert-icon">⚠️</span>
+                        <span id="modalAlertType"></span>
+                    </div>
+                    <div class="alert-info">
+                        <p><strong>Change Value:</strong> <span id="modalChangeValue"></span></p>
+                        <p><strong>Analysis ID:</strong> <span id="modalAnalysisId"></span></p>
+                        <p><strong>Timestamp:</strong> <span id="modalTimestamp"></span></p>
+                    </div>
+                    <div class="alert-actions">
+                        <p class="alert-message">⚠️ This illegal activity has been reported to authorities. Immediate investigation is required.</p>
+                        <div class="action-buttons">
+                            <button class="action-btn primary" onclick="viewInDashboard()">View Details</button>
+                            <button class="action-btn secondary" onclick="closeModal()">Close Alert</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="container">
+        <h1 style="color: #333; margin-bottom: 10px; font-size: 24px;">Upload Images</h1>
+        <p class="subtitle">Upload satellite images to compare and detect changes</p>
+        
+        <form id="uploadForm">
+            <div class="form-group">
+                <label for="before">Before Image</label>
+                <div class="file-input-wrapper">
+                    <input type="file" id="before" name="before" accept="image/*" required>
+                    <label for="before" class="file-input-label">
+                        📁 Click or drag to upload before image
+                    </label>
+                    <span class="file-name" id="beforeName"></span>
+                </div>
+            </div>
+            
+            <div class="form-group">
+                <label for="after">After Image</label>
+                <div class="file-input-wrapper">
+                    <input type="file" id="after" name="after" accept="image/*" required>
+                    <label for="after" class="file-input-label">
+                        📁 Click or drag to upload after image
+                    </label>
+                    <span class="file-name" id="afterName"></span>
+                </div>
+            </div>
+            
+            <button type="submit">Analyze Images</button>
+        </form>
+        
+        <div class="loading" id="loading">
+            <div class="spinner"></div>
+            <div class="loading-text">Processing... please wait</div>
+        </div>
+        
+        <div class="result" id="result"></div>
+    </div>
+    
+    <script>
+        const form = document.getElementById('uploadForm');
+        const beforeInput = document.getElementById('before');
+        const afterInput = document.getElementById('after');
+        const beforeName = document.getElementById('beforeName');
+        const afterName = document.getElementById('afterName');
+        const loading = document.getElementById('loading');
+        const result = document.getElementById('result');
+        
+        beforeInput.addEventListener('change', (e) => {
+            beforeName.textContent = e.target.files[0] ? e.target.files[0].name : '';
+        });
+        
+        afterInput.addEventListener('change', (e) => {
+            afterName.textContent = e.target.files[0] ? e.target.files[0].name : '';
+        });
+        
+        form.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const formData = new FormData(form);
+            
+            loading.style.display = 'block';
+            result.style.display = 'none';
+            
+            try {
+                const response = await fetch('/upload', {
+                    method: 'POST',
+                    body: formData
+                });
+                
+                const data = await response.json();
+                
+                loading.style.display = 'none';
+                result.style.display = 'block';
+                
+                if (response.ok) {
+                    const isIllegal = data.alert.includes('Illegal') || data.alert.includes('Encroachment') || data.alert.includes('Deforestation');
+                    
+                    result.className = `result ${isIllegal ? 'danger' : 'success'}`;
+                    result.innerHTML = `
+                        <div class="result-label">${isIllegal ? '🚨 ALERT DETECTED' : '✅ Analysis Complete'}</div>
+                        <div class="result-content">
+                            <div class="land-usage-status ${isIllegal ? 'illegal' : 'legal'}">
+                                <span class="status-icon">${isIllegal ? '⚠️' : '✅'}</span>
+                                <span class="status-text">${isIllegal ? 'ILLEGAL LAND USAGE DETECTED' : 'NO ILLEGAL LAND USAGE'}</span>
+                            </div>
+                            <br>
+                            <span class="result-label">Change Detection Value:</span>
+                            <span class="result-value">${data.value.toLocaleString()}</span>
+                            <br><br>
+                            <span class="result-label">Alert Type:</span>
+                            <span class="result-value alert-type" style="color: ${isIllegal ? '#dc2626' : '#059669'};">${data.alert}</span>
+                            <br><br>
+                            ${data.change_visualization ? `
+                                <span class="result-label">Change Visualization:</span>
+                                <br>
+                                <img src="${data.change_visualization}" alt="Change Visualization" style="max-width: 100%; height: auto; border: 2px solid #667eea; border-radius: 8px; margin: 10px 0;">
+                                <br><small style="color: #666;">Red areas highlight detected changes</small>
+                                <br><br>
+                            ` : ''}
+                            <span class="result-label">Analysis ID:</span>
+                            <span class="result-value">#${data.id}</span>
+                            <br><br>
+                            <a href="/dashboard" style="color: #667eea; text-decoration: none; font-weight: 600;">
+                                View in Dashboard →
+                            </a>
+                        </div>
+                    `;
+                    
+                    // Show popup modal for illegal activities
+                    if (isIllegal) {
+                        showIllegalActivityModal(data.alert, data.value, data.id);
+                        playAlertSound();
+                        showAlertMessage(data.alert);
+                    }
+                } else {
+                    result.className = 'result error';
+                    result.innerHTML = `
+                        <div class="result-label">❌ Error</div>
+                        <div class="result-content">${data.message}</div>
+                    `;
+                }
+            } catch (error) {
+                loading.style.display = 'none';
+                result.style.display = 'block';
+                result.className = 'result error';
+                result.innerHTML = `
+                    <div class="result-label">❌ Network Error</div>
+                    <div class="result-content">${error.message}</div>
+                `;
+            }
+        });
+        
+        // Alert sound and message functions
+        function playAlertSound() {
+            try {
+                const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+                const oscillator = audioContext.createOscillator();
+                const gainNode = audioContext.createGain();
+                
+                oscillator.connect(gainNode);
+                gainNode.connect(audioContext.destination);
+                
+                oscillator.frequency.setValueAtTime(800, audioContext.currentTime);
+                oscillator.type = 'square';
+                gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
+                
+                oscillator.start(audioContext.currentTime);
+                oscillator.stop(audioContext.currentTime + 0.5);
+            } catch (error) {
+                console.log('Audio not supported');
+            }
+        }
+        
+        function showAlertMessage(alertType) {
+            // Try to show browser notification
+            if ('Notification' in window && Notification.permission === 'granted') {
+                new Notification('🚨 Satellite Alert', {
+                    body: alertType + ' detected! Immediate action required.',
+                    icon: 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjQiIGhlaWdodD0iMjQiIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHBhdGggZD0iTTEyIDJDMTMuMSAyIDE0IDIuOSAxNCA0VjE2QzE0IDE3LjEgMTMuMSAxOCAxMiAxOEMxMC45IDE4IDEwIDE3LjEgMTAgMTZWNFoiIGZpbGw9IiNkYzI2MjYiLz4KPHBhdGggZD0iTTEgMTlIMjNWMzFIMVYxOVoiIGZpbGw9IiNkYzI2MjYiLz4KPC9zdmc+'
+                });
+            } else if ('Notification' in window && Notification.permission !== 'denied') {
+                Notification.requestPermission().then(permission => {
+                    if (permission === 'granted') {
+                        new Notification('🚨 Satellite Alert', {
+                            body: alertType + ' detected! Immediate action required.',
+                            icon: 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjQiIGhlaWdodD0iMjQiIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHBhdGggZD0iTTEyIDJDMTMuMSAyIDE0IDIuOSAxNCA0VjE2QzE0IDE3LjEgMTMuMSAxOCAxMiAxOEMxMC45IDE4IDEwIDE3LjEgMTAgMTZWNFoiIGZpbGw9IiNkYzI2MjYiLz4KPHBhdGggZD0iTTEgMTlIMjNWMzFIMVYxOVoiIGZpbGw9IiNkYzI2MjYiLz4KPC9zdmc+'
+                        });
+                    }
+                });
+            }
+        }
+        
+        function showIllegalActivityModal(alertType, changeValue, analysisId) {
+            const modal = document.getElementById('illegalActivityModal');
+            const now = new Date();
+            
+            document.getElementById('modalAlertType').textContent = alertType;
+            document.getElementById('modalChangeValue').textContent = changeValue.toLocaleString();
+            document.getElementById('modalAnalysisId').textContent = '#' + analysisId;
+            document.getElementById('modalTimestamp').textContent = now.toLocaleString();
+            
+            modal.style.display = 'block';
+            
+            // Auto-close after 10 seconds
+            setTimeout(() => {
+                if (modal.style.display === 'block') {
+                    closeModal();
+                }
+            }, 10000);
+        }
+        
+        function closeModal() {
+            const modal = document.getElementById('illegalActivityModal');
+            modal.style.display = 'none';
+        }
+        
+        function viewInDashboard() {
+            window.location.href = '/dashboard';
+        }
+        
+        // Modal event listeners
+        document.addEventListener('DOMContentLoaded', function() {
+            const modal = document.getElementById('illegalActivityModal');
+            const closeBtn = document.querySelector('.modal-close');
+            
+            if (closeBtn) {
+                closeBtn.onclick = closeModal;
+            }
+            
+            // Close modal when clicking outside
+            window.onclick = function(event) {
+                if (event.target === modal) {
+                    closeModal();
+                }
+            }
+            
+            // Close modal on Escape key
+            document.addEventListener('keydown', function(event) {
+                if (event.key === 'Escape' && modal.style.display === 'block') {
+                    closeModal();
+                }
+            });
+        });
+        
+        // Drag and drop support
+        document.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+        });
+        
+        document.addEventListener('drop', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+        });
+    </script>
+</body>
+</html>

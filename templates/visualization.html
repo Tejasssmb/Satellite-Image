@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Interactive Visualization - GeoView</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
+    <style>
+        body{margin:0;padding:0;font-family:Arial,Helvetica,sans-serif;}
+        .nav{background:rgba(15,23,42,0.95);padding:1rem 2rem;position:fixed;top:0;width:100%;z-index:1000;}
+        .nav .container{display:flex;justify-content:space-between;align-items:center;max-width:1200px;margin:0 auto;}
+        .nav .logo{font-size:24px;font-weight:700;background:linear-gradient(135deg,#667eea 0%,#764ba2 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;}
+        .nav ul{display:flex;gap:1.5rem;list-style:none;}
+        .nav a{color:#cbd5e1;text-decoration:none;font-weight:500;}
+        .nav a:hover{color:#667eea;}
+        #map{height:60vh;margin-top:80px;}
+        #slider{width:80%;margin:20px auto;}
+        #threejs{height:40vh;width:100%;background:#000;}
+        .heatmap-control{position:absolute;top:100px;right:20px;z-index:1000;background:#fff;padding:10px;border-radius:4px;}
+    </style>
+</head>
+<body>
+    <nav class="nav">
+        <div class="container">
+            <div class="logo">🛰️ GeoView</div>
+            <ul>
+                <li><a href="/">Home</a></li>
+                <li><a href="/visualization">Explore</a></li>
+                <li><a href="/dashboard">Dashboard</a></li>
+                <li><a href="/upload">Upload</a></li>
+            </ul>
+        </div>
+    </nav>
+    <div id="map"></div>
+    <input type="range" id="slider" min="0" max="1" step="0.01" value="0">
+    <div class="heatmap-control">
+        <button id="toggleHeat">Toggle Heatmap</button>
+    </div>
+    <div id="threejs"></div>
+    <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+    <script src="https://unpkg.com/leaflet.heat/dist/leaflet-heat.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r134/three.min.js"></script>
+    <script>
+        // basic map and two overlay images for slider
+        var map = L.map('map').setView([0, 0], 2);
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{attribution:'&copy; OpenStreetMap contributors'}).addTo(map);
+
+        var beforeLayer = L.imageOverlay('https://placekitten.com/800/600', map.getBounds(), {opacity:1}).addTo(map);
+        var afterLayer = L.imageOverlay('https://placekitten.com/801/601', map.getBounds(), {opacity:0, className:'blur-layer'}).addTo(map);
+
+        document.getElementById('slider').addEventListener('input', function(){
+            var v = parseFloat(this.value);
+            beforeLayer.setOpacity(1-v);
+            afterLayer.setOpacity(v);
+            afterLayer.getElement().style.filter = 'blur(' + (1-v)*10 + 'px)';
+        });
+
+        // heatmap toggle - data loaded from reports API
+        var heat;
+        fetch('/api/reports')
+            .then(r=>r.json())
+            .then(points=>{
+                heat = L.heatLayer(points,{radius:25});
+            });
+        document.getElementById('toggleHeat').addEventListener('click', function(){
+            if(!heat) return;
+            if(map.hasLayer(heat)) map.removeLayer(heat); else map.addLayer(heat);
+        });
+
+        // simple three.js scene
+        var scene = new THREE.Scene();
+        var camera = new THREE.PerspectiveCamera(75, window.innerWidth/window.innerHeight, 0.1, 1000);
+        var renderer = new THREE.WebGLRenderer();
+        renderer.setSize(window.innerWidth, window.innerHeight*0.4);
+        document.getElementById('threejs').appendChild(renderer.domElement);
+        var geometry = new THREE.BoxGeometry();
+        var material = new THREE.MeshBasicMaterial({color:0x00ff00});
+        var cube = new THREE.Mesh(geometry, material);
+        scene.add(cube);
+        camera.position.z = 5;
+        var animate = function(){requestAnimationFrame(animate);cube.rotation.x += 0.01;cube.rotation.y += 0.01;renderer.render(scene,camera);};
+        animate();
+    </script>
+</body>
+</html>

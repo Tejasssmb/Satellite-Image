@@ -1,0 +1,2 @@
+# Optional temporal land-cover analysis via the pre-trained Dynamic World model.
+earthengine-api

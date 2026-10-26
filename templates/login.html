@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login - GeoView</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            padding: 24px;
+        }
+        .card {
+            width: 100%;
+            max-width: 420px;
+            background: #fff;
+            border-radius: 10px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            padding: 40px;
+        }
+        .logo {
+            text-align: center;
+            font-size: 2.5em;
+            margin-bottom: 15px;
+        }
+        h1 { 
+            font-size: 24px; 
+            color: #333; 
+            margin-bottom: 8px; 
+            text-align: center;
+        }
+        .subtitle { 
+            text-align: center;
+            color: #666; 
+            margin-bottom: 30px; 
+            font-size: 14px; 
+        }
+        label { 
+            display: block; 
+            color: #333; 
+            font-weight: 600; 
+            margin-bottom: 8px; 
+        }
+        input {
+            width: 100%;
+            padding: 12px 15px;
+            border: 2px solid #e0e0e0;
+            border-radius: 5px;
+            font-size: 14px;
+            margin-bottom: 16px;
+            outline: none;
+            transition: border-color 0.2s, box-shadow 0.2s;
+        }
+        input:focus {
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102,126,234,0.1);
+        }
+        button {
+            width: 100%;
+            padding: 12px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: #fff;
+            border: none;
+            border-radius: 5px;
+            font-weight: 600;
+            font-size: 16px;
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+        button:hover { 
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(102,126,234,0.3);
+        }
+        .error {
+            background: #fee;
+            color: #c33;
+            border: 1px solid #fcc;
+            padding: 12px;
+            border-radius: 5px;
+            margin-bottom: 20px;
+            font-size: 14px;
+            border-left: 4px solid #c33;
+        }
+        .links {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 20px;
+            font-size: 13px;
+        }
+        .links a {
+            color: #667eea;
+            text-decoration: none;
+            font-weight: 600;
+        }
+        .links a:hover {
+            text-decoration: underline;
+        }
+        .signup-link {
+            text-align: center;
+            margin-top: 20px;
+            padding-top: 20px;
+            border-top: 1px solid #e0e0e0;
+            color: #666;
+            font-size: 14px;
+        }
+        .signup-link a {
+            color: #667eea;
+            font-weight: 600;
+        }
+        .divider {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            color: #999;
+            font-size: 12px;
+            margin: 24px 0;
+        }
+        .divider::before, .divider::after {
+            content: '';
+            height: 1px;
+            background: #e0e0e0;
+            flex: 1;
+        }
+        .otp-form input { margin-bottom: 10px; }
+        .otp-form button { background: #fff; color: #667eea; border: 2px solid #667eea; }
+    </style>
+</head>
+<body>
+    <div class="card">
+        <div class="logo">🛰️</div>
+        <h1>Welcome to GeoView</h1>
+        <p class="subtitle">Sign in to your account</p>
+        {% if error %}
+            <div class="error">{{ error }}</div>
+        {% endif %}
+        <form method="POST" action="/login">
+            <label for="username">Username</label>
+            <input id="username" name="username" type="text" required placeholder="Enter your username">
+            
+            <label for="password">Password</label>
+            <input id="password" name="password" type="password" required placeholder="Enter your password">
+            
+            <button type="submit">Sign In</button>
+            
+            <div class="links">
+                <a href="{{ url_for('forgot_password') }}">Forgot Password?</a>
+            </div>
+        </form>
+
+        <div class="divider">OR</div>
+        <form class="otp-form" method="POST" action="{{ url_for('email_login') }}">
+            <label for="email_login">Sign in with email OTP</label>
+            <input id="email_login" name="email" type="email" required placeholder="you@example.com" autocomplete="email">
+            <button type="submit">Email Me a Sign-In Code</button>
+        </form>
+        
+        <div class="signup-link">
+            Don't have an account? <a href="{{ url_for('register') }}">Sign Up Here</a>
+        </div>
+    </div>
+</body>
+</html>

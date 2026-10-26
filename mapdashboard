@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>Land Use Detection Map</title>
+
+<link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css"/>
+
+</head>
+
+<body>
+
+<h2>Satellite Monitoring Dashboard</h2>
+
+<div id="map" style="height:500px"></div>
+
+<script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+
+<script>
+
+var map = L.map('map').setView([13.028,77.593],10);
+
+L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{
+maxZoom:19
+}).addTo(map);
+
+var marker = L.marker([13.028,77.593]).addTo(map)
+.bindPopup("⚠ Possible Illegal Construction");
+
+</script>
+
+</body>
+</html>

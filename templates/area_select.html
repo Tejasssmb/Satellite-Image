@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Select Area of Interest</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
+    <style>
+        html, body, #map {height:100%;margin:0;padding:0;}
+        .container {max-width: 900px; margin: 40px auto; background: #fff; border-radius: 10px; box-shadow: 0 4px 16px rgba(0,0,0,0.08); padding: 30px;}
+        h1 {color: #333; margin-bottom: 20px;}
+        #coords {margin-top: 20px; font-size: 16px; color: #444;}
+        button {margin-top: 20px; padding: 10px 20px; background: #667eea; color: #fff; border: none; border-radius: 6px; cursor: pointer; font-size: 16px;}
+        button:hover {background: #764ba2;}
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Select Area of Interest</h1>
+        <div id="map" style="height: 500px;"></div>
+        <div id="coords">Draw a rectangle to select your region.</div>
+        <button id="saveBtn">Save Area</button>
+    </div>
+    <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+    <script src="https://unpkg.com/leaflet-draw/dist/leaflet.draw.js"></script>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet-draw/dist/leaflet.draw.css" />
+    <script>
+        const map = L.map('map').setView([20, 0], 2);
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {attribution: '&copy; OpenStreetMap contributors'}).addTo(map);
+        let drawnLayer;
+        const drawnItems = new L.FeatureGroup();
+        map.addLayer(drawnItems);
+        const drawControl = new L.Control.Draw({
+            draw: {polygon: false, polyline: false, circle: false, marker: false, circlemarker: false},
+            edit: {featureGroup: drawnItems}
+        });
+        map.addControl(drawControl);
+        map.on(L.Draw.Event.CREATED, function (e) {
+            if (drawnLayer) drawnItems.removeLayer(drawnLayer);
+            drawnLayer = e.layer;
+            drawnItems.addLayer(drawnLayer);
+            const bounds = drawnLayer.getBounds();
+            document.getElementById('coords').textContent = `Selected: [${bounds.getSouthWest().lat.toFixed(5)}, ${bounds.getSouthWest().lng.toFixed(5)}] to [${bounds.getNorthEast().lat.toFixed(5)}, ${bounds.getNorthEast().lng.toFixed(5)}]`;
+        });
+        document.getElementById('saveBtn').onclick = function() {
+            if (!drawnLayer) { alert('Please draw a rectangle first!'); return; }
+            const bounds = drawnLayer.getBounds();
+            // Save to backend (AJAX or form)
+            fetch('/api/save_area', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({
+                    sw: bounds.getSouthWest(),
+                    ne: bounds.getNorthEast()
+                })
+            }).then(r => r.json()).then(data => {
+                alert('Area saved!');
+            });
+        };
+    </script>
+</body>
+</html>

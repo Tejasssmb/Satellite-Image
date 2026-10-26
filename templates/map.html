@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GeoView Map View</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
+    <style>
+        html, body, #map {height:100%;margin:0;padding:0;}
+        .nav {background:rgba(15,23,42,0.95);padding:1rem 2rem;position:fixed;top:0;width:100%;z-index:1000;}
+        .nav .container{display:flex;justify-content:space-between;align-items:center;max-width:1200px;margin:0 auto;}
+        .nav .logo{font-size:24px;font-weight:700;background:linear-gradient(135deg,#667eea 0%,#764ba2 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;}
+        .nav ul{display:flex;gap:1.5rem;list-style:none;}
+        .nav a{color:#cbd5e1;text-decoration:none;font-weight:500;}
+        .nav a:hover{color:#667eea;}
+    </style>
+</head>
+<body>
+    <nav class="nav">
+        <div class="container">
+            <div class="logo">🛰️ GeoView</div>
+            <ul>
+                <li><a href="/">Home</a></li>
+                <li><a href="/visualization">Explore</a></li>
+                <li><a href="/report">Submit Report</a></li>
+                <li><a href="/reports">View Reports</a></li>
+                <li><a href="/landowners">Landowners</a></li>
+                <li><a href="/analyze">Analyze</a></li>
+                <li><a href="/dashboard">Dashboard</a></li>
+                <li><a href="/upload">Upload</a></li>
+            </ul>
+        </div>
+    </nav>
+    <div id="map" style="margin-top:80px;"></div>
+    <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+    <script>
+        // parse data passed via query string
+        function getQueryData(){
+            const params=new URLSearchParams(window.location.search);
+            const d=params.get('data');
+            return d?JSON.parse(decodeURIComponent(d)):null;
+        }
+        const data=getQueryData();
+        if(!data){
+            alert('No data provided');
+        } else {
+            const bounds=[[data.tl_lat,data.tl_lon],[data.br_lat,data.br_lon]];
+            const map=L.map('map').fitBounds(bounds);
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{attribution:'&copy; OpenStreetMap contributors'}).addTo(map);
+            // overlay image
+            L.imageOverlay(data.after_url,bounds).addTo(map);
+            // draw boxes
+            data.boxes.forEach(b=>{
+                // convert pixel coords to latlon
+                const x=b[0], y=b[1], w=b[2], h=b[3];
+                const px=data.width, py=data.height;
+                const lon_per_px=(data.br_lon-data.tl_lon)/px;
+                const lat_per_py=(data.tl_lat-data.br_lat)/py;
+                const lat1=data.tl_lat - y*lat_per_py;
+                const lon1=data.tl_lon + x*lon_per_px;
+                const lat2=data.tl_lat - (y+h)*lat_per_py;
+                const lon2=data.tl_lon + (x+w)*lon_per_px;
+                L.rectangle([[lat1, lon1],[lat2, lon2]],{color:'red',weight:2,fillOpacity:0.2}).addTo(map);
+            });
+        }
+    </script>
+</body>
+</html>

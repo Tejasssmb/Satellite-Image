@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Reports - GeoView</title>
+    <style>
+        body{font-family:Arial,Helvetica,sans-serif;background:#f9fafb;margin:0;padding:0;}
+        .container{max-width:1000px;margin:80px auto;padding:20px;}
+        table{width:100%;border-collapse:collapse;background:#fff;}
+        th,td{padding:12px 8px;border:1px solid #e2e8f0;text-align:left;}
+        th{background:#667eea;color:#fff;}
+        tr:nth-child(even){background:#f1f5f9;}
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Submitted Reports</h1>
+        <table>
+            <thead>
+                <tr><th>ID</th><th>User</th><th>Landowner</th><th>Description</th><th>Coords</th><th>Time</th><th>Status</th></tr>
+            </thead>
+            <tbody>
+                {% for r in reports %}
+                <tr>
+                    <td>{{ r[0] }}</td>
+                    <td>{{ r[1] }}</td>
+                    <td>{{ r[2] }}</td>
+                    <td>{{ r[3] }}</td>
+                    <td>{{ r[4] }}, {{ r[5] }}</td>
+                    <td>{{ r[6] }}</td>
+                    <td>{{ r[7] }}</td>
+                </tr>
+                {% else %}
+                <tr><td colspan="7">No reports yet.</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</body>
+</html>

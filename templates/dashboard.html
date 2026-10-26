@@ -1,0 +1,561 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Monitoring Dashboard - GeoView</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: #f3f6fa;
+            min-height: 100vh;
+            padding: 24px;
+            color: #172b4d;
+        }
+        
+        .navbar {
+            background: #102a43;
+            color: #fff;
+            padding: 16px 24px;
+            border-radius: 12px;
+            margin-bottom: 28px;
+            box-shadow: 0 8px 24px rgba(16, 42, 67, 0.16);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .navbar h2 {
+            color: #fff;
+            font-size: 24px;
+        }
+        
+        .nav-links {
+            display: flex;
+            gap: 20px;
+        }
+        
+        .nav-links a {
+            text-decoration: none;
+            color: #d9e2ec;
+            font-weight: 600;
+            padding: 8px 16px;
+            border-radius: 6px;
+            transition: all 0.3s ease;
+        }
+        
+        .nav-links a:hover {
+            background: rgba(255,255,255,0.12);
+            color: #fff;
+        }
+        
+        .nav-links a.active {
+            background: #2f80ed;
+            color: white;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .page-heading {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-end;
+            gap: 16px;
+            margin: 4px 0 22px;
+        }
+
+        .page-heading h1 {
+            color: #102a43;
+            font-size: 28px;
+            margin-bottom: 6px;
+        }
+
+        .page-heading p {
+            color: #627d98;
+        }
+
+        .system-status {
+            color: #087f5b;
+            background: #e6fcf5;
+            border: 1px solid #b2f2dd;
+            border-radius: 20px;
+            padding: 8px 12px;
+            font-size: 13px;
+            font-weight: 700;
+            white-space: nowrap;
+        }
+        
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+        
+        .stat-card {
+            background: #fff;
+            padding: 22px;
+            border-radius: 12px;
+            border: 1px solid #e5edf5;
+            box-shadow: 0 5px 18px rgba(16, 42, 67, 0.06);
+            text-align: left;
+        }
+        
+        .stat-card h3 {
+            color: #627d98;
+            font-size: 14px;
+            margin-bottom: 10px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        
+        .stat-card .value {
+            color: #102a43;
+            font-size: 30px;
+            font-weight: 700;
+            font-family: inherit;
+        }
+        
+        .history-card {
+            background: white;
+            border-radius: 12px;
+            border: 1px solid #e5edf5;
+            box-shadow: 0 5px 18px rgba(16, 42, 67, 0.06);
+            padding: 24px;
+            margin-bottom: 24px;
+        }
+        
+        .history-card h2 {
+            color: #102a43;
+            margin-bottom: 20px;
+            font-size: 24px;
+        }
+        
+        .table-wrapper {
+            overflow-x: auto;
+        }
+        
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        
+        thead {
+            background: #f3f6fa;
+            border-bottom: 1px solid #d9e2ec;
+        }
+        
+        th {
+            padding: 15px;
+            text-align: left;
+            color: #486581;
+            font-weight: 600;
+            font-size: 14px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        
+        td {
+            padding: 15px;
+            border-bottom: 1px solid #eee;
+            color: #486581;
+        }
+        
+        tr:hover {
+            background: #f7fafc;
+        }
+        
+        .change-value {
+            color: #2f80ed;
+            font-weight: 700;
+            font-family: 'Courier New', monospace;
+            font-size: 16px;
+        }
+        
+        .timestamp {
+            color: #829ab1;
+            font-size: 13px;
+        }
+        
+        .status-badge {
+            display: inline-block;
+            padding: 5px 10px;
+            border-radius: 4px;
+            font-size: 12px;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+        
+        .status-badge.success {
+            background: #d1fae5;
+            color: #065f46;
+        }
+        
+        .status-badge.error {
+            background: #fee2e2;
+            color: #991b1b;
+        }
+        
+        .btn-delete {
+            background: #ef4444;
+            color: white;
+            border: none;
+            padding: 6px 12px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 12px;
+            transition: all 0.3s ease;
+        }
+        
+        .btn-delete:hover {
+            background: #dc2626;
+        }
+        
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: #829ab1;
+        }
+        
+        .empty-state svg {
+            width: 80px;
+            height: 80px;
+            margin-bottom: 20px;
+            opacity: 0.5;
+        }
+        
+        .empty-state h3 {
+            color: #666;
+            margin-bottom: 10px;
+        }
+        
+        .loading {
+            display: none;
+            text-align: center;
+            padding: 40px;
+        }
+        
+        .spinner {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #667eea;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        .refresh-btn {
+            background: #2f80ed;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+        
+        .refresh-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 18px rgba(47, 128, 237, 0.24);
+        }
+        
+        .header-actions {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .dashboard-panel {
+            background: #fff;
+            border: 1px solid #e5edf5;
+            border-radius: 12px;
+            box-shadow: 0 5px 18px rgba(16, 42, 67, 0.06);
+            padding: 24px;
+            margin-bottom: 24px;
+        }
+
+        .dashboard-panel h2 {
+            color: #102a43;
+            margin-bottom: 4px;
+        }
+
+        .panel-subtitle {
+            color: #829ab1;
+            font-size: 13px;
+            margin-bottom: 18px;
+        }
+
+        .alert-badge {
+            display: inline-block;
+            padding: 6px 10px;
+            background: #fff4e6;
+            color: #b45309;
+            border-radius: 999px;
+            font-size: 12px;
+            font-weight: 700;
+        }
+        .alert-badge.legacy {
+            background: #edf2f7;
+            color: #52606d;
+        }
+
+        @media (max-width: 700px) {
+            body { padding: 12px; }
+            .navbar { align-items: flex-start; gap: 12px; padding: 14px; }
+            .nav-links { justify-content: flex-end; flex-wrap: wrap; gap: 6px; }
+            .nav-links a { padding: 7px 9px; font-size: 13px; }
+            .page-heading { align-items: flex-start; flex-direction: column; }
+            .history-card, .dashboard-panel { padding: 16px; }
+        }
+    </style>
+</head>
+<body>
+    <div class="navbar">
+        <h2>GeoView <span style="color:#9fb3c8;font-size:14px;font-weight:500;">/ Monitoring</span></h2>
+        <div class="nav-links">
+            <a href="/auto-analyze">Auto Analyze</a>
+            <a href="/upload">Manual Upload</a>
+            <a href="/dashboard" class="active">Dashboard</a>
+            <a href="/">Logout</a>
+        </div>
+    </div>
+    
+    <div class="container">
+        <div class="page-heading">
+            <div>
+                <h1>Temporal Change Monitoring</h1>
+                <p>Review observed satellite-image changes and analysis activity.</p>
+            </div>
+            <span class="system-status">● ON-DEMAND IMAGE ANALYSIS</span>
+        </div>
+        <!-- Chart Container -->
+        <div id="chartContainer" class="dashboard-panel">
+            <h2>Change activity</h2>
+            <p class="panel-subtitle">Changed pixels per analysis run. Results from different locations or date ranges are not directly comparable; this chart is not a cause or legality classification.</p>
+            <canvas id="changeChart" height="80"></canvas>
+        </div>
+        <!-- Stats Grid -->
+        <div class="stats-grid" id="statsGrid">
+            <div class="loading"><div class="spinner"></div></div>
+        </div>
+        
+        <!-- History Table -->
+        <div class="history-card">
+            <div class="header-actions">
+                <h2>Analysis History</h2>
+                <button class="refresh-btn" onclick="loadData()">🔄 Refresh</button>
+            </div>
+            
+            <div id="historyContainer">
+                <div class="loading"><div class="spinner"></div></div>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        let chartInstance = null;
+        function escapeHtml(value) {
+            return String(value ?? '').replace(/[&<>"']/g, character => ({
+                '&': '&amp;',
+                '<': '&lt;',
+                '>': '&gt;',
+                '"': '&quot;',
+                "'": '&#39;'
+            })[character]);
+        }
+
+        function temporalSummary(value) {
+            if (!value) return 'Not run';
+            try {
+                const assessment = JSON.parse(value);
+                if (assessment.status !== 'assessed') return 'Insufficient clear history';
+                return (assessment.patterns || [])
+                    .map(pattern => pattern.label)
+                    .join('; ') || 'No strong pattern';
+            } catch (error) {
+                console.error('Invalid saved temporal assessment:', error);
+                return 'Assessment unavailable';
+            }
+        }
+
+        async function loadData() {
+            await loadStats();
+            await loadHistory();
+            await loadChart();
+        }
+
+        async function loadChart() {
+            try {
+                const response = await fetch('/api/analysis');
+                const analyses = await response.json();
+                if (!analyses.length) {
+                    document.getElementById('chartContainer').innerHTML = '<div class="empty-state">No data for chart</div>';
+                    return;
+                }
+                // Sort by timestamp ascending
+                analyses.sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp));
+                const labels = analyses.map(a => new Date(a.timestamp).toLocaleString());
+                const data = analyses.map(a => a.change_value);
+                const ctx = document.getElementById('changeChart').getContext('2d');
+                if (chartInstance) chartInstance.destroy();
+                chartInstance = new Chart(ctx, {
+                    type: 'line',
+                    data: {
+                        labels: labels,
+                        datasets: [{
+                            label: 'Changed pixels',
+                            data: data,
+                            borderColor: '#2f80ed',
+                            backgroundColor: 'rgba(47,128,237,0.12)',
+                            fill: true,
+                            tension: 0.3,
+                            pointRadius: 3,
+                            pointBackgroundColor: '#102a43',
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        plugins: {
+                            legend: { display: true },
+                            title: { display: false }
+                        },
+                        scales: {
+                            x: { ticks: { color: '#627d98', maxRotation: 45, minRotation: 0 }, grid: { display: false } },
+                            y: { beginAtZero: true, ticks: { color: '#627d98' }, grid: { color: '#edf2f7' } }
+                        }
+                    }
+                });
+            } catch (error) {
+                document.getElementById('chartContainer').innerHTML = '<div class="empty-state">Error loading chart</div>';
+            }
+        }
+        
+        async function loadStats() {
+            try {
+                const response = await fetch('/api/stats');
+                const stats = await response.json();
+                
+                document.getElementById('statsGrid').innerHTML = `
+                    <div class="stat-card">
+                        <h3>Completed Analyses</h3>
+                        <div class="value">${stats.total_analyses}</div>
+                    </div>
+                    <div class="stat-card">
+                        <h3>Potential Change Alerts</h3>
+                        <div class="value">${stats.potential_alerts}</div>
+                    </div>
+                    <div class="stat-card">
+                        <h3>Average Changed Pixels</h3>
+                        <div class="value">${stats.average_change.toLocaleString()}</div>
+                    </div>
+                    <div class="stat-card">
+                        <h3>Largest Observed Change</h3>
+                        <div class="value">${stats.max_change.toLocaleString()}</div>
+                    </div>
+                `;
+            } catch (error) {
+                console.error('Error loading stats:', error);
+            }
+        }
+        
+        async function loadHistory() {
+            try {
+                const response = await fetch('/api/analysis');
+                const analyses = await response.json();
+                
+                let html = '';
+                
+                if (analyses.length === 0) {
+                    html = `
+                        <div class="empty-state">
+                            <h3>No analyses yet</h3>
+                            <p>Start by uploading satellite images for change detection.</p>
+                            <a href="/" style="color: #667eea; text-decoration: none; margin-top: 20px; display: inline-block;">
+                                Go to Upload →
+                            </a>
+                        </div>
+                    `;
+                } else {
+                    html = `
+                        <div class="table-wrapper">
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th>ID</th>
+                                        <th>Area / Coordinates</th>
+                                        <th>Scene dates</th>
+                                        <th>Changed Pixels</th>
+                                        <th>Assessment</th>
+                                        <th>Temporal patterns</th>
+                                        <th>Timestamp</th>
+                                        <th>Status</th>
+                                        <th>Action</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    ${analyses.map(a => `
+                                        <tr>
+                                            <td><strong>#${a.id}</strong></td>
+                                        <td>${escapeHtml(a.area_name || (a.latitude && a.longitude ? `${Number(a.latitude).toFixed(4)}, ${Number(a.longitude).toFixed(4)}` : 'Uploaded comparison'))}</td>
+                                        <td>${escapeHtml(a.before_scene_date && a.after_scene_date ? `${a.before_scene_date} → ${a.after_scene_date}` : 'Not recorded')}</td>
+                                            <td class="change-value">${a.change_value.toLocaleString()}</td>
+                                        <td><span class="alert-badge ${/illegal|deforestation|encroachment/i.test(a.alert || '') ? 'legacy' : ''}">${escapeHtml(/illegal|deforestation|encroachment/i.test(a.alert || '') ? 'Legacy label — unverified' : (a.alert || 'No significant image change'))}</span></td>
+                                        <td>${escapeHtml(temporalSummary(a.temporal_analysis_json))}</td>
+                                        <td class="timestamp">${new Date(a.timestamp).toLocaleString()}</td>
+                                            <td><span class="status-badge ${a.status}">${a.status.toUpperCase()}</span></td>
+                                            <td><button class="btn-delete" onclick="deleteAnalysis(${a.id})">Delete</button></td>
+                                        </tr>
+                                    `).join('')}
+                                </tbody>
+                            </table>
+                        </div>
+                    `;
+                }
+                
+                document.getElementById('historyContainer').innerHTML = html;
+            } catch (error) {
+                console.error('Error loading history:', error);
+                document.getElementById('historyContainer').innerHTML = `
+                    <div class="empty-state">
+                        <h3>Error loading data</h3>
+                        <p>${error.message}</p>
+                    </div>
+                `;
+            }
+        }
+        
+        async function deleteAnalysis(id) {
+            if (confirm('Are you sure you want to delete this analysis?')) {
+                try {
+                    await fetch(`/api/analysis/${id}`, { method: 'DELETE' });
+                    loadData();
+                } catch (error) {
+                    console.error('Error deleting analysis:', error);
+                }
+            }
+        }
+        
+        // Auto-refresh every 30 seconds
+        loadData();
+        setInterval(loadData, 30000);
+    </script>
+</body>
+</html>

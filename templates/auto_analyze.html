@@ -1,0 +1,721 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Auto Analyze - GeoView</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #f5f5f5;
+        }
+        .navbar {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 15px 30px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .navbar a {
+            color: white;
+            text-decoration: none;
+            margin-left: 20px;
+        }
+        .navbar a:hover {
+            opacity: 0.9;
+        }
+        .container {
+            max-width: 800px;
+            margin: 40px auto;
+            padding: 20px;
+        }
+        .card {
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            padding: 40px;
+        }
+        h1 {
+            color: #333;
+            margin-bottom: 10px;
+            font-size: 28px;
+        }
+        .subtitle {
+            color: #666;
+            margin-bottom: 30px;
+            font-size: 16px;
+        }
+        .form-group {
+            margin-bottom: 25px;
+        }
+        label {
+            display: block;
+            color: #333;
+            font-weight: 600;
+            margin-bottom: 10px;
+        }
+        .search-container {
+            position: relative;
+        }
+        input[type="text"], input[type="number"] {
+            width: 100%;
+            padding: 12px 15px;
+            border: 2px solid #e0e0e0;
+            border-radius: 5px;
+            font-size: 14px;
+        }
+        input:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+        .suggestions {
+            position: absolute;
+            top: 100%;
+            left: 0;
+            right: 0;
+            background: white;
+            border: 1px solid #e0e0e0;
+            border-top: none;
+            border-radius: 0 0 5px 5px;
+            display: none;
+            z-index: 1000;
+            max-height: 200px;
+            overflow-y: auto;
+        }
+        .suggestions.active {
+            display: block;
+        }
+        .suggestion-item {
+            padding: 12px 15px;
+            cursor: pointer;
+            border-bottom: 1px solid #f0f0f0;
+        }
+        .suggestion-item:hover {
+            background: #f9f9f9;
+        }
+        .suggestion-item.selected {
+            background: #e8eaf6;
+        }
+        button {
+            width: 100%;
+            padding: 12px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 5px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            margin-top: 20px;
+        }
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+        }
+        button:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+        .loading {
+            display: none;
+            text-align: center;
+            margin: 30px 0;
+        }
+        .spinner {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #667eea;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 15px;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        .results {
+            display: none;
+            margin-top: 30px;
+            padding-top: 30px;
+            border-top: 2px solid #f0f0f0;
+        }
+        .result-item {
+            background: #f9f9f9;
+            padding: 20px;
+            border-radius: 5px;
+            margin-bottom: 15px;
+            border-left: 4px solid #667eea;
+        }
+        .result-item h3 {
+            color: #333;
+            margin-bottom: 10px;
+        }
+        .result-item p {
+            color: #666;
+            font-size: 14px;
+            margin-bottom: 5px;
+        }
+        .analysis-caveat {
+            margin-top: 12px;
+            padding: 10px;
+            background: #fff7e6;
+            border-radius: 4px;
+        }
+        .analysis-map {
+            height: 340px;
+            margin: 12px 0 24px;
+            border: 1px solid #d9e2ec;
+            border-radius: 8px;
+            overflow: hidden;
+        }
+        .map-caption {
+            color: #667085;
+            font-size: 13px;
+            margin: 0 0 8px;
+        }
+        .temporal-option {
+            display: flex;
+            align-items: flex-start;
+            gap: 10px;
+            padding: 14px;
+            background: #f3f6fa;
+            border: 1px solid #d9e2ec;
+            border-radius: 7px;
+            margin-bottom: 20px;
+        }
+        .temporal-option input {
+            margin-top: 4px;
+        }
+        .temporal-option label {
+            margin: 0;
+        }
+        .temporal-panel {
+            background: #f7fafc;
+            border: 1px solid #d9e2ec;
+            border-radius: 8px;
+            padding: 16px;
+            margin: 16px 0;
+        }
+        .temporal-pattern {
+            padding: 8px 0;
+            border-bottom: 1px solid #e5edf5;
+        }
+        .alert-high {
+            border-left-color: #e74c3c;
+        }
+        .alert-medium {
+            border-left-color: #f39c12;
+        }
+        .alert-low {
+            border-left-color: #27ae60;
+        }
+        .error {
+            background: #fee;
+            color: #c33;
+            padding: 15px;
+            border-radius: 5px;
+            margin-bottom: 20px;
+            border-left: 4px solid #c33;
+        }
+        .info {
+            background: #eff;
+            color: #099;
+            padding: 15px;
+            border-radius: 5px;
+            margin-bottom: 20px;
+            border-left: 4px solid #099;
+            font-size: 14px;
+        }
+        .location-wrapper{
+    position:relative;
+}
+
+.coordinate-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+}
+
+#clearLocation{
+    position:absolute;
+    right:10px;
+    top:50%;
+    transform:translateY(-50%);
+    border:none;
+    background:none;
+    cursor:pointer;
+    font-size:18px;
+}
+    </style>
+</head>
+<body>
+    <div class="navbar">
+        <div style="display: flex; align-items: center;">
+            <span style="font-size: 24px; margin-right: 10px;">🛰️</span>
+            <strong>GeoView</strong>
+        </div>
+        <div>
+            <a href="{{ url_for('dashboard') }}">Dashboard</a>
+            <a href="{{ url_for('logout') }}">Logout</a>
+        </div>
+    </div>
+    
+    <div class="container">
+        <div class="card">
+            <h1>🔍 Automatic Area Analysis</h1>
+            <p class="subtitle">Enter an area name and we'll automatically fetch and analyze satellite images</p>
+            
+            <div class="info">
+                <strong>How it works:</strong> Enter a location and dates. GeoView searches Sentinel-2 imagery near each date, screens clouds over the selected area, compares clear pixels, and maps the analysis location.
+            </div>
+            
+            <form id="analyzeForm">
+                <div class="form-group">
+                    <label for="areaName">Area Name or Location*</label>
+                    <div class="search-container">
+                        <div class="location-wrapper">
+
+    <input
+        type="text"
+        id="areaName"
+        name="area_name"
+        required
+        placeholder="e.g., 'Delhi', 'Mumbai', 'Amazon Rainforest'"
+                            
+    >
+
+    <button
+        type="button"
+        id="clearLocation"
+    >
+        ✕
+    </button>
+
+</div>
+                
+                        
+                        <div class="suggestions"></div>
+                    </div>
+                    <p style="color: #999; font-size: 12px; margin-top: 8px;">Type to see suggestions</p>
+                </div>
+
+                <div class="form-group">
+                    <label>Or enter an exact point</label>
+                    <div class="coordinate-grid">
+                        <input type="number" id="latitude" name="latitude" step="any" min="-90" max="90" placeholder="Latitude, e.g. 19.0760">
+                        <input type="number" id="longitude" name="longitude" step="any" min="-180" max="180" placeholder="Longitude, e.g. 72.8777">
+                    </div>
+                    <p id="coordinateStatus" style="color: #667eea; font-size: 12px; margin-top: 8px;"></p>
+                </div>
+                
+                <div class="form-group">
+    <label for="fromDate">From Date</label>
+
+    <input
+        type="date"
+        id="fromDate"
+        name="from_date"
+        required
+    >
+</div>
+
+<div class="form-group">
+    <label for="toDate">To Date</label>
+
+    <input
+        type="date"
+        id="toDate"
+        name="to_date"
+        required
+    >
+</div>
+
+<div class="temporal-option">
+    <input type="checkbox" id="temporalAnalysis" name="temporal_analysis" value="1">
+    <label for="temporalAnalysis">
+        Analyze the multi-year land-cover time series
+        <span style="display:block;font-weight:400;color:#667085;margin-top:4px;">
+            Uses the pre-trained Dynamic World model in Google Earth Engine. Requires an Earth Engine-enabled Google Cloud project and local authentication. Use at least 2 years of dates for seasonal-window comparisons.
+        </span>
+    </label>
+</div>
+                
+                <div class="info" style="margin-top: 30px;">
+                    <strong>Image and model limits:</strong> Sentinel-2 imagery has approximately 10 m native pixel resolution; resizing cannot create finer detail. Scenes can be up to 14 days from the requested dates and are rejected unless at least 80% of this area is clear. Temporal class trends are regional evidence, not proof of a cause or legality.
+                </div>
+                
+                <button type="submit">Analyze Area</button>
+            </form>
+            
+            <div class="loading" id="loading">
+                <div class="spinner"></div>
+                <p>Fetching satellite images and analyzing changes...</p>
+                <p style="color: #999; font-size: 12px; margin-top: 10px;">This may take a minute</p>
+            </div>
+            
+            <div class="results" id="results">
+                <h2 style="color: #333; margin-bottom: 20px;">Analysis Results</h2>
+                <div id="resultContent"></div>
+            </div>
+        </div>
+    </div>
+    
+    <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+    <script>
+        const areaInput = document.getElementById('areaName');
+        const suggestions = document.querySelector('.suggestions');
+        const form = document.getElementById('analyzeForm');
+        const loading = document.getElementById('loading');
+        const results = document.getElementById('results');
+        const resultContent = document.getElementById('resultContent');
+        const latitudeInput = document.getElementById('latitude');
+        const longitudeInput = document.getElementById('longitude');
+        const coordinateStatus = document.getElementById('coordinateStatus');
+        let alertAudioContext = null;
+        
+        // Area suggestions
+        areaInput.addEventListener('input', async function() {
+            const query = this.value.trim();
+            
+            if (query.length < 2) {
+                suggestions.classList.remove('active');
+                return;
+            }
+            
+            try {
+                const response = await fetch(`/api/search-areas?q=${encodeURIComponent(query)}`);
+                const data = await response.json();
+                console.log("Suggestions:", data);
+                if (data.length === 0) {
+                    suggestions.classList.remove('active');
+                    return;
+                }
+                
+                suggestions.innerHTML = data.map(area => `
+    <div class="suggestion-item"
+         onclick='selectArea(${JSON.stringify(area)})'>
+        <strong>${area.name}</strong>
+        <small style="display:block;color:#888;">
+            ${Number(area.latitude).toFixed(4)},
+            ${Number(area.longitude).toFixed(4)}
+        </small>
+    </div>
+`).join('');
+                suggestions.classList.add('active');
+            } catch (error) {
+                console.error('Error fetching suggestions:', error);
+            }
+        });
+        
+        function selectArea(area) {
+            areaInput.value = area.name;
+            if (area.latitude !== undefined) {
+                latitudeInput.value = area.latitude;
+                longitudeInput.value = area.longitude;
+            }
+            suggestions.classList.remove('active');
+        }
+
+        async function reverseLookupCoordinates() {
+            const latitude = latitudeInput.value.trim();
+            const longitude = longitudeInput.value.trim();
+            if (!latitude || !longitude) return;
+            try {
+                const response = await fetch(`/api/reverse-geocode?lat=${encodeURIComponent(latitude)}&lon=${encodeURIComponent(longitude)}`);
+                const data = await response.json();
+                if (!response.ok) throw new Error(data.error || 'Location lookup failed');
+                areaInput.value = data.name;
+                coordinateStatus.textContent = `Location found: ${data.name}`;
+            } catch (error) {
+                coordinateStatus.textContent = error.message;
+            }
+        }
+
+        latitudeInput.addEventListener('change', reverseLookupCoordinates);
+        longitudeInput.addEventListener('change', reverseLookupCoordinates);
+        
+        // Form submission
+        form.addEventListener('submit', async function(e) {
+            e.preventDefault();
+            try {
+                const AudioContext = window.AudioContext || window.webkitAudioContext;
+                if (AudioContext) {
+                    alertAudioContext = new AudioContext();
+                    await alertAudioContext.resume();
+                }
+            } catch (error) {
+                console.warn('Audio context unavailable:', error);
+            }
+            
+            const areaName = areaInput.value.trim();
+            const latitude = latitudeInput.value.trim();
+            const longitude = longitudeInput.value.trim();
+            const fromDate =
+    document.getElementById('fromDate').value;
+document
+.getElementById("clearLocation")
+.addEventListener("click", () => {
+
+    document.getElementById("areaName").value = "";
+    latitudeInput.value = "";
+    longitudeInput.value = "";
+    coordinateStatus.textContent = "";
+
+});
+const toDate =
+    document.getElementById('toDate').value;
+            
+            if ((!areaName && !latitude && !longitude) || (latitude && !longitude) || (!latitude && longitude)) {
+                alert('Enter a place name or both latitude and longitude values');
+                return;
+            }
+            
+            loading.style.display = 'block';
+            results.style.display = 'none';
+            form.style.display = 'none';
+            
+            try {
+                const formData = new FormData();
+                formData.append('area_name', areaName);
+                formData.append('latitude', latitude);
+                formData.append('longitude', longitude);
+                formData.append('from_date', fromDate);
+                formData.append('to_date', toDate);
+                if (document.getElementById('temporalAnalysis').checked) {
+                    formData.append('temporal_analysis', '1');
+                }
+                
+                const response = await fetch('/auto-analyze', {
+                    method: 'POST',
+                    body: formData
+                });
+                
+                const data = await response.json();
+                
+                if (!response.ok) {
+                    throw new Error(data.error || 'Analysis failed');
+                }
+                
+                // Display results
+                const isAnomaly = data.alert !== 'No Significant Change';
+                const alertClass = data.changed_ratio >= 0.02 ? 'alert-high' : isAnomaly ? 'alert-medium' : 'alert-low';
+                const alertIcon = data.changed_ratio >= 0.02 ? '🔴' : isAnomaly ? '🟡' : '🟢';
+                
+                resultContent.innerHTML = `
+                    <div class="result-item ${alertClass}">
+                        <h3>${alertIcon} ${data.alert}</h3>
+                        <p><strong>Area:</strong> ${data.area}</p>
+                        <p><strong>Changed Pixels:</strong> ${Number(data.change_value).toLocaleString()} (${(Number(data.changed_ratio) * 100).toFixed(2)}%)</p>
+                        <p><strong>Latitude:</strong> ${data.latitude.toFixed(4)}</p>
+                        <p><strong>Longitude:</strong> ${data.longitude.toFixed(4)}</p>
+                        <p><strong>Analysis ID:</strong> ${data.id}</p>
+                        <p><strong>Requested date range:</strong> ${data.from_date} to ${data.to_date}</p>
+                        <p><strong>Before scene date:</strong> ${data.before_date || 'Not reported by provider'}</p>
+                        <p><strong>After scene date:</strong> ${data.after_date || 'Not reported by provider'}</p>
+                        <p><strong>Before scene-wide cloud cover:</strong> ${data.before_scene_cloud_cover == null ? 'Not reported' : `${data.before_scene_cloud_cover}%`}</p>
+                        <p><strong>After scene-wide cloud cover:</strong> ${data.after_scene_cloud_cover == null ? 'Not reported' : `${data.after_scene_cloud_cover}%`}</p>
+                        <p><strong>Before analyzed area clear:</strong> ${data.before_area_clear_percent}%</p>
+                        <p><strong>After analyzed area clear:</strong> ${data.after_area_clear_percent}%</p>
+                        <p><strong>Land cover:</strong> Not reliably classified from true-color imagery</p>
+                        <p><strong>Legality:</strong> Undetermined</p>
+                        <p class="analysis-caveat">Scenes can be up to 14 days from the requested dates. Scenes with less than 80% clear pixels over the analyzed area are rejected; cloudy, shadowed, and other unclear pixels are excluded from the comparison and shown gray. Image differences can result from natural or seasonal change, development, or image conditions. This analysis cannot determine whether land use is legal.</p>
+
+<p><strong>Coordinates:</strong>
+${data.latitude}, ${data.longitude}
+</p>
+                    </div>
+                    <div class="summary-box">
+
+<h3>Analysis Summary</h3>
+
+<ul>
+<li>Location identified successfully</li>
+<li>Coordinates extracted</li>
+<li>Cloud-screened satellite imagery compared</li>
+<li>Clear-pixel change detection executed</li>
+<li>Analysis stored in database</li>
+</ul>
+
+</div>
+                    ${data.temporal_analysis?.status === 'not_requested' ? `
+                    <div class="temporal-panel">
+                        <h3>Temporal ML assessment not run</h3>
+                        <p>Select the multi-year temporal analysis option and configure Earth Engine to compare land-cover probabilities over time.</p>
+                    </div>` : ''}
+                    ${data.temporal_analysis?.status !== 'not_requested' ? `
+                    <div class="temporal-panel">
+                        <h3>Temporal land-cover assessment</h3>
+                        <p><strong>Model:</strong> ${data.temporal_analysis.model}</p>
+                        <p><strong>Status:</strong> ${data.temporal_analysis.status.replaceAll('_', ' ')}</p>
+                        <p><strong>Usable monthly observations:</strong> ${data.temporal_analysis.usable_months ?? 0}</p>
+                        ${data.temporal_analysis.patterns?.map(pattern => `
+                            <p class="temporal-pattern"><strong>${pattern.label}</strong>
+                            ${pattern.change_percentage_points == null ? '' : `(${pattern.change_percentage_points > 0 ? '+' : ''}${pattern.change_percentage_points} percentage points)`}</p>
+                        `).join('') || ''}
+                        <p><strong>Legal status:</strong> Unverified — no jurisdiction-specific official records are connected.</p>
+                        <p class="analysis-caveat">${data.temporal_analysis.caveat || 'A temporal land-cover signal is not a legal determination.'}</p>
+                        ${data.temporal_analysis.monthly_series?.length ? '<canvas id="temporalChart" aria-label="Monthly land-cover probability trend"></canvas>' : ''}
+                    </div>` : ''}
+<h3>Analyzed Area</h3>
+<p class="map-caption">Map marker shows the analysis center; the rectangle is the approximate image area analyzed.</p>
+<div id="analysisMap" class="analysis-map" role="img" aria-label="Map of the analyzed area"></div>
+${data.before_image ? `
+<h4>Before Image</h4>
+<img src="${data.before_image}" style="max-width:100%;margin-bottom:10px;">
+` : ''}
+
+${data.after_image ? `
+<h4>After Image</h4>
+<img src="${data.after_image}" style="max-width:100%;margin-bottom:10px;">
+` : ''}
+
+${data.change_visualization ? `
+<h4>Detected Changes</h4>
+<img src="${data.change_visualization}" style="max-width:100%;">
+` : ''}
+                    <div style="background: #e8f5e9; padding: 15px; border-radius: 5px; color: #2e7d32;">
+                        <strong>✓ Analysis Complete!</strong> The satellite images have been analyzed and the results are saved to your dashboard.
+                    </div>
+                `;
+
+                if (isAnomaly) {
+                    playHighAlert();
+                    showBrowserAlert(data.alert, data.area);
+                }
+
+                if (data.temporal_analysis?.monthly_series?.length && window.Chart) {
+                    const series = data.temporal_analysis.monthly_series;
+                    new Chart(document.getElementById('temporalChart'), {
+                        type: 'line',
+                        data: {
+                            labels: series.map(row => row.month),
+                            datasets: [
+                                { label: 'Built-up', data: series.map(row => row.built == null ? null : row.built * 100), borderColor: '#c0392b', spanGaps: true },
+                                { label: 'Trees', data: series.map(row => row.trees == null ? null : row.trees * 100), borderColor: '#2e7d32', spanGaps: true },
+                                { label: 'Water', data: series.map(row => row.water == null ? null : row.water * 100), borderColor: '#2980b9', spanGaps: true },
+                                { label: 'Bare/sparse', data: series.map(row => row.bare == null ? null : row.bare * 100), borderColor: '#9a7d0a', spanGaps: true }
+                            ]
+                        },
+                        options: {
+                            responsive: true,
+                            interaction: { mode: 'index', intersect: false },
+                            plugins: { title: { display: true, text: 'Monthly mean class probability across the analyzed area' } },
+                            scales: { y: { min: 0, max: 100, title: { display: true, text: 'Mean probability (%)' } } }
+                        }
+                    });
+                }
+                
+                results.style.display = 'block';
+                if (window.L) {
+                    const analysisMap = L.map('analysisMap').setView([data.latitude, data.longitude], 15);
+                    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                        attribution: '&copy; OpenStreetMap contributors',
+                        maxZoom: 19
+                    }).addTo(analysisMap);
+                    const areaBounds = [
+                        [data.latitude - 0.01, data.longitude - 0.01],
+                        [data.latitude + 0.01, data.longitude + 0.01]
+                    ];
+                    L.rectangle(areaBounds, {
+                        color: isAnomaly ? '#dc2626' : '#2f80ed',
+                        weight: 2,
+                        fillOpacity: 0.12
+                    }).addTo(analysisMap);
+                    L.marker([data.latitude, data.longitude])
+                        .addTo(analysisMap)
+                        .bindPopup(data.area)
+                        .openPopup();
+                    analysisMap.fitBounds(areaBounds);
+                } else {
+                    document.getElementById('analysisMap').textContent =
+                        'The map could not be loaded. Location: ' +
+                        data.latitude + ', ' + data.longitude;
+                }
+            } catch (error) {
+                resultContent.innerHTML = `<div class="error"><strong>Error:</strong> ${error.message}</div>`;
+                results.style.display = 'block';
+            } finally {
+                loading.style.display = 'none';
+                form.style.display = 'block';
+            }
+        });
+
+        function playHighAlert() {
+            try {
+                const AudioContext = window.AudioContext || window.webkitAudioContext;
+                const context = alertAudioContext || new AudioContext();
+                const now = context.currentTime + 0.05;
+                const sirenDuration = 2;
+                const oscillator = context.createOscillator();
+                const gain = context.createGain();
+                oscillator.type = 'triangle';
+                oscillator.frequency.setValueAtTime(680, now);
+                for (let second = 0; second < sirenDuration; second += 0.5) {
+                    oscillator.frequency.linearRampToValueAtTime(1150, now + second + 0.25);
+                    oscillator.frequency.linearRampToValueAtTime(680, now + second + 0.5);
+                }
+                gain.gain.setValueAtTime(0.0001, now);
+                gain.gain.exponentialRampToValueAtTime(0.18, now + 0.08);
+                gain.gain.setValueAtTime(0.18, now + sirenDuration - 0.08);
+                gain.gain.exponentialRampToValueAtTime(0.0001, now + sirenDuration);
+                oscillator.connect(gain);
+                gain.connect(context.destination);
+                oscillator.start(now);
+                oscillator.stop(now + sirenDuration);
+            } catch (error) {
+                console.warn('Alert sound unavailable:', error);
+            }
+        }
+
+        function showBrowserAlert(alertType, area) {
+            if ('Notification' in window && Notification.permission === 'granted') {
+                new Notification('GeoView anomaly detected', { body: `${alertType} in ${area}` });
+            }
+        }
+        
+        // Dismiss suggestions when clicking outside
+        document.addEventListener('click', function(e) {
+            if (e.target !== areaInput) {
+                suggestions.classList.remove('active');
+            }
+        });
+
+        const today = new Date();
+
+const todayString =
+    today.toISOString().split("T")[0];
+
+document.getElementById("toDate").value =
+    todayString;
+
+const defaultFrom = new Date();
+
+defaultFrom.setDate(
+    defaultFrom.getDate() - 30
+);
+
+document.getElementById("fromDate").value =
+    defaultFrom.toISOString().split("T")[0];
+
+document.getElementById('temporalAnalysis').addEventListener('change', event => {
+    if (event.target.checked) {
+        const temporalStart = new Date();
+        temporalStart.setFullYear(temporalStart.getFullYear() - 3);
+        document.getElementById('fromDate').value =
+            temporalStart.toISOString().split('T')[0];
+    }
+});
+    </script>
+
+</body>
+</html>

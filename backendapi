@@ -1,0 +1,18 @@
+from flask import Flask, jsonify
+from detection.change_detection import detect_changes
+
+app = Flask(__name__)
+
+@app.route("/detect")
+
+def detect():
+
+    result = detect_changes(
+        "dataset/before_images/img1.png",
+        "dataset/after_images/img1.png"
+    )
+
+    return jsonify({"status":"Change Detected"})
+
+if __name__ == "__main__":
+    app.run(debug=True)

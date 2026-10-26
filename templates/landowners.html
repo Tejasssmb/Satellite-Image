@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Landowners - GeoView</title>
+    <style>
+        body{font-family:Arial,Helvetica,sans-serif;background:#eef2f7;margin:0;padding:0;}
+        .container{max-width:800px;margin:80px auto;padding:20px;background:#fff;border-radius:8px;}
+        table{width:100%;border-collapse:collapse;}
+        th,td{padding:10px;border:1px solid #cbd5e1;text-align:left;}
+        th{background:#4a5568;color:#fff;}
+        form label{display:block;margin-top:10px;font-weight:600;}
+        form input, form textarea{width:100%;padding:8px;border:1px solid #cbd5e1;border-radius:4px;}
+        form button{margin-top:15px;padding:8px 16px;background:#48bb78;color:#fff;border:none;border-radius:4px;cursor:pointer;}
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Manage Landowners</h1>
+        <form method="post">
+            <label for="name">Name</label>
+            <input type="text" id="name" name="name" required>
+            <label for="contact">Contact</label>
+            <input type="text" id="contact" name="contact">
+            <label for="notes">Notes</label>
+            <textarea id="notes" name="notes"></textarea>
+            <button type="submit">Add Landowner</button>
+        </form>
+        <h2>Existing Landowners</h2>
+        <table>
+            <tr><th>ID</th><th>Name</th><th>Contact</th><th>Notes</th></tr>
+            {% for o in owners %}
+            <tr>
+                <td>{{ o[0] }}</td><td>{{ o[1] }}</td><td>{{ o[2] }}</td><td>{{ o[3] }}</td>
+            </tr>
+            {% else %}
+            <tr><td colspan="4">No landowners defined.</td></tr>
+            {% endfor %}
+        </table>
+    </div>
+</body>
+</html>

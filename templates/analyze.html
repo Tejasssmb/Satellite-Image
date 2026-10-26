@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GeoView Anomaly Analysis</title>
+    <style>
+        body {font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background:#0f172a; color:#e2e8f0;}
+        .nav {background:rgba(15,23,42,0.95);padding:1rem 2rem;position:fixed;top:0;width:100%;z-index:1000;}
+        .nav .container{display:flex;justify-content:space-between;align-items:center;max-width:1200px;margin:0 auto;}
+        .nav .logo{font-size:24px;font-weight:700;background:linear-gradient(135deg,#667eea 0%,#764ba2 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;}
+        .nav ul{display:flex;gap:1.5rem;list-style:none;}
+        .nav a{color:#cbd5e1;text-decoration:none;font-weight:500;}
+        .nav a:hover{color:#667eea;}
+        .container{max-width:800px;margin:120px auto 40px;padding:0 20px;}
+        .form-group{margin-bottom:20px;}
+        label{display:block;margin-bottom:8px;color:#cbd5e1;}
+        input[type="file"], input[type="text"]{width:100%;padding:10px;border-radius:6px;border:1px solid #334155;background:#1e293b;color:#e2e8f0;}
+        button{padding:12px 20px;background:linear-gradient(135deg,#667eea 0%,#764ba2 100%);color:white;border:none;border-radius:8px;cursor:pointer;transition:all 0.3s;}
+        button:hover{transform:translateY(-2px);box-shadow:0 10px 25px rgba(102,126,234,0.4);}
+        .note{font-size:12px;color:#94a3b8;}
+        .result{margin-top:30px;}
+    </style>
+</head>
+<body>
+    <nav class="nav">
+        <div class="container">
+            <div class="logo">🛰️ GeoView</div>
+            <ul>
+                <li><a href="/">Home</a></li>
+                <li><a href="/upload">Upload</a></li>
+                <li><a href="/visualization">Explore</a></li>
+                <li><a href="/dashboard">Dashboard</a></li>
+                <li><a href="/analyze">Anomaly</a></li>
+            </ul>
+        </div>
+    </nav>
+    <div class="container">
+        <h1 style="color:#fff; margin-bottom:20px;">Anomaly Detection</h1>
+        <p class="note">Upload before/after images and provide geographic bounding coordinates for the image corners. Suspicious change areas will be highlighted on a map.</p>
+        <form id="analyzeForm" enctype="multipart/form-data">
+            <div class="form-group">
+                <label for="before">Before Image</label>
+                <input type="file" id="before" name="before" accept="image/*" required>
+            </div>
+            <div class="form-group">
+                <label for="after">After Image</label>
+                <input type="file" id="after" name="after" accept="image/*" required>
+            </div>
+            <div class="form-group">
+                <label>Top-left corner (lat,lon)</label>
+                <input type="text" name="tl_lat" placeholder="e.g. 40.7128" required>
+                <input type="text" name="tl_lon" placeholder="e.g. -74.0060" required>
+            </div>
+            <div class="form-group">
+                <label>Bottom-right corner (lat,lon)</label>
+                <input type="text" name="br_lat" placeholder="e.g. 40.7060" required>
+                <input type="text" name="br_lon" placeholder="e.g. -73.9900" required>
+            </div>
+            <button type="submit">Analyze &amp; Map</button>
+        </form>
+        <div class="result" id="result"></div>
+    </div>
+    <script>
+        const form = document.getElementById('analyzeForm');
+        const resultDiv = document.getElementById('result');
+        form.addEventListener('submit', async e=>{
+            e.preventDefault();
+            resultDiv.innerHTML='Processing...';
+            const fd=new FormData(form);
+            const resp=await fetch('/analyze', {method:'POST', body:fd});
+            const data=await resp.json();
+            if(resp.ok){
+                // redirect to map view with id or data
+                window.location.href = '/map?data=' + encodeURIComponent(JSON.stringify(data));
+            } else {
+                resultDiv.innerHTML = '<p style="color:#f87171;">'+data.error+'</p>';
+            }
+        });
+    </script>
+</body>
+</html>

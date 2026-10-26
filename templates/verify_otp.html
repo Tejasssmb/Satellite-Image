@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Verify OTP - GeoView</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+        .container {
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.3);
+            width: 100%;
+            max-width: 450px;
+            padding: 40px;
+        }
+        .logo {
+            text-align: center;
+            font-size: 3em;
+            margin-bottom: 20px;
+        }
+        h1 {
+            color: #333;
+            font-size: 24px;
+            margin-bottom: 10px;
+            text-align: center;
+        }
+        .subtitle {
+            text-align: center;
+            color: #666;
+            margin-bottom: 30px;
+            font-size: 14px;
+        }
+        .form-group {
+            margin-bottom: 20px;
+        }
+        label {
+            display: block;
+            color: #333;
+            font-weight: 600;
+            margin-bottom: 8px;
+        }
+        input {
+            width: 100%;
+            padding: 12px 15px;
+            border: 2px solid #e0e0e0;
+            border-radius: 5px;
+            font-size: 14px;
+            text-align: center;
+            letter-spacing: 2px;
+            font-size: 20px;
+            font-weight: bold;
+        }
+        input:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+        button {
+            width: 100%;
+            padding: 12px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 5px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            margin-top: 20px;
+        }
+        button:hover {
+            transform: translateY(-2px);
+        }
+        .error {
+            background: #fee;
+            color: #c33;
+            padding: 12px;
+            border-radius: 5px;
+            margin-bottom: 20px;
+            border-left: 4px solid #c33;
+        }
+        .info {
+            background: #eff;
+            color: #099;
+            padding: 12px;
+            border-radius: 5px;
+            border-left: 4px solid #099;
+            margin-bottom: 20px;
+            font-size: 13px;
+        }
+        .back-link {
+            text-align: center;
+            margin-top: 20px;
+        }
+        .back-link a {
+            color: #667eea;
+            text-decoration: none;
+            font-size: 14px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="logo">✉️</div>
+        <h1>Verify OTP</h1>
+        <p class="subtitle">
+            {% if method == 'email_login' %}
+            Enter the 6-digit sign-in code sent to your email
+            {% else %}
+            Enter the 6-digit code sent to you
+            {% endif %}
+        </p>
+        
+        <div class="info">
+            {% if method in ['email', 'email_login'] %}
+            Check your email for a 6-digit verification code
+            {% else %}
+            Check your SMS for a 6-digit verification code
+            {% endif %}
+        </div>
+        
+        {% if error %}
+        <div class="error">{{ error }}</div>
+        {% endif %}
+        
+        <form method="POST">
+            <div class="form-group">
+                <label for="otp">Enter Code</label>
+                <input type="text" id="otp" name="otp" required placeholder="000000" 
+                       maxlength="6" pattern="\d{6}" inputmode="numeric">
+            </div>
+            
+            <button type="submit">Verify Code</button>
+            
+            <div class="back-link">
+                <a href="{{ url_for('forgot_password') }}">← Try another method</a>
+            </div>
+        </form>
+    </div>
+</body>
+</html>
